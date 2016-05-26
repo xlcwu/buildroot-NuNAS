@@ -1,0 +1,9 @@
+config BR2_PACKAGE_ETCD
+	bool "etcd"
+	depends on BR2_PACKAGE_HOST_GO_ARCH_SUPPORTS
+	depends on BR2_aarch64 || BR2_i386 || BR2_x86_64
+	help
+	  etcd is a distributed key value store that provides a reliable
+	  way to store data across a cluster of machines.
+
+	  https://coreos.com/etcd
