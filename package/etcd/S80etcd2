@@ -1,0 +1,42 @@
+#!/bin/sh
+
+DAEMON=/usr/bin/etcd2
+CONFIG=/etc/etcd2.conf
+ETC_DATA_DIR=/var/lib/etcd2
+
+[ -x $DAEMON ] || exit 0
+[ -f $CONFIG ] || exit 0
+
+source $CONFIG
+
+case "$1" in
+	start)
+		printf "Starting etcd daemon: "
+		[ -d $ETC_DATA_DIR ] || mkdir -p $ETC_DATA_DIR
+		start-stop-daemon -S -x $DAEMON -- \
+			–data-dir=$ETC_DATA_DIR \
+			–name=$ETCD_NAME \
+			–discovery=$ETCD_DISCOVERY \
+			-debug=$ETCD_DEBUG \
+			–listen-client-urls=$ETCD_LISTEN_CLIENT_URLS \
+			–listen-peer-urls=$ETCD_LISTEN_PEER_URLS \
+			–advertise-client-urls=$ETCD_ADVERTISE_CLIENT_URLS \
+			–initial-advertise-peer-urls=$ETCD_INITIAL_ADVERTISE_PEER_URLS
+		[ $? = 0 ] && echo "OK" || echo "FAIL"
+		;;
+	stop)
+		printf "Stopping etcd daemon: "
+		start-stop-daemon -K -x $DAEMON
+		[ $? = 0 ] && echo "OK" || echo "FAIL"
+		;;
+	restart|reload|force-reload)
+		$0 stop || true
+		sleep 1
+		$0 start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|reload|force-reload}"
+		exit 1
+esac
+
+exit 0
