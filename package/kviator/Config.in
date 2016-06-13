@@ -1,0 +1,5 @@
+config BR2_PACKAGE_KVIATOR
+	bool "kviator"
+	depends on BR2_PACKAGE_HOST_GO_ARCH_SUPPORTS
+	help
+	  kviator is a small tool to manage data across distributed key value stores (consul, etcd).
