@@ -1,0 +1,5 @@
+config BR2_PACKAGE_CONFD
+	bool "confd"
+	depends on BR2_PACKAGE_HOST_GO_ARCH_SUPPORTS
+	help
+	  Manage local application configuration files using templates and data from etcd or consul.
