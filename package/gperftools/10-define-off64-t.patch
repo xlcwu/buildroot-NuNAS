@@ -1,0 +1,11 @@
+--- orig/gperftools-2.4/src/base/linux_syscall_support.h
++++ gperftools-2.4/src/base/linux_syscall_support.h
+@@ -197,6 +197,8 @@
+  *   them, because glibc defines a global macro by the same name.
+  */
+ 
++typedef off64_t __off64_t;
++
+ /* include/linux/dirent.h                                                    */
+ struct kernel_dirent64 {
+   unsigned long long d_ino;
