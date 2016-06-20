@@ -1,0 +1,59 @@
+comment "ceph requires C++, largefiles, threads, wide chars"
+	depends on !BR2_INSTALL_LIBSTDCPP || !BR2_TOOLCHAIN_HAS_THREADS || !BR2_USE_WCHAR || !BR2_USE_MMU
+	depends on !BR2_avr32 && !BR2_microblaze
+config BR2_PACKAGE_CEPH
+	bool "Ceph"
+	depends on BR2_INSTALL_LIBSTDCPP
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	depends on BR2_USE_WCHAR		# util-linux
+	depends on BR2_USE_MMU			# util-linux (libblkid)
+	depends on !BR2_avr32 && !BR2_microblaze
+	select BR2_PACKAGE_UTIL_LINUX
+	select BR2_PACKAGE_UTIL_LINUX_LIBUUID
+	select BR2_PACKAGE_UTIL_LINUX_LIBBLKID
+	select BR2_PACKAGE_HAS_UDEV
+	select BR2_PACKAGE_ICU
+	select BR2_PACKAGE_BOOST
+	select BR2_PACKAGE_BOOST_SYSTEM
+	select BR2_PACKAGE_BOOST_THREAD
+	select BR2_PACKAGE_BOOST_RANDOM
+	select BR2_PACKAGE_BOOST_REGEX
+	select BR2_PACKAGE_BOOST_IOSTREAMS
+	select BR2_PACKAGE_BOOST_PROGRAM_OPTIONS
+	select BR2_PACKAGE_EXPAT
+	select BR2_PACKAGE_KEYUTILS
+	select BR2_PACKAGE_LIBEDIT
+	select BR2_PACKAGE_LIBNSS
+	select BR2_PACKAGE_LIBSIGC
+	select BR2_PACKAGE_GLIBMM
+	select BR2_PACKAGE_LIBUNWIND
+	select BR2_PACKAGE_LIBATOMIC_OPS
+	select BR2_PACKAGE_SNAPPY
+	select BR2_PACKAGE_LEVELDB
+	select BR2_PACKAGE_LIBCURL
+	select BR2_PACKAGE_LIBFCGI
+	select BR2_PACKAGE_PYTHON
+	select BR2_PACKAGE_PYTHON_SETUPTOOLS
+	select BR2_PACKAGE_GPERFTOOLS
+	select BR2_PACKAGE_BTRFS_PROGS
+	select BR2_PACKAGE_OPENLDAP
+	select BR2_PACKAGE_XFSPROGS
+	help
+	  Ceph is a distributed object store and file system designed to
+	  provide excellent performance, reliability and scalability.
+	  Ceph uniquely delivers object, block, and file storage 
+	  in one unified system.
+
+	  http://ceph.com/
+
+if BR2_PACKAGE_CEPH
+
+config BR2_PACKAGE_CEPH_ALL
+	bool "Add Ceph more library support"
+	default n
+	depends on BR2_PACKAGE_CEPH
+	select BR2_PACKAGE_LIBAIO
+	select BR2_PACKAGE_LIBFUSE
+	select BR2_PACKAGE_GPERFTOOLS
+
+endif
