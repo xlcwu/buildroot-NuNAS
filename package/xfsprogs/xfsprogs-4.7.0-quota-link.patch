@@ -1,0 +1,13 @@
+--- a/quota/Makefile	2016-09-10 05:39:42.758318458 +0000
++++ b/quota/Makefile	2016-09-10 06:44:16.990847136 +0000
+@@ -14,8 +14,8 @@
+ PCFILES = darwin.c freebsd.c irix.c linux.c
+ LSRCFILES = $(shell echo $(PCFILES) | sed -e "s/$(PKG_PLATFORM).c//g")
+ 
+-LLDLIBS = $(LIBXCMD)
+-LTDEPENDENCIES = $(LIBXCMD)
++LLDLIBS = $(LIBXFS) $(LIBXCMD)
++LTDEPENDENCIES = $(LIBXFS) $(LIBXCMD)
+ LLDFLAGS = -static
+ 
+ ifeq ($(ENABLE_READLINE),yes)

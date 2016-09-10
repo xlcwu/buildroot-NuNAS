@@ -4,6 +4,7 @@
 #
 ################################################################################
 
+XFSPROGS_VERSION = 4.5.0
 XFSPROGS_VERSION = 4.7.0
 XFSPROGS_SITE = ftp://oss.sgi.com/projects/xfs/cmd_tars
 

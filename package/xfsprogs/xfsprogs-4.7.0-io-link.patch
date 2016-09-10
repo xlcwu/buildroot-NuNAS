@@ -1,0 +1,13 @@
+--- a/io/Makefile	2016-09-10 05:39:42.757318467 +0000
++++ b/io/Makefile	2016-09-10 06:45:53.769949070 +0000
+@@ -13,8 +13,8 @@
+ 	mmap.c open.c parent.c pread.c prealloc.c pwrite.c seek.c shutdown.c \
+ 	sync.c truncate.c reflink.c
+ 
+-LLDLIBS = $(LIBXCMD) $(LIBHANDLE)
+-LTDEPENDENCIES = $(LIBXCMD) $(LIBHANDLE)
++LLDLIBS = $(LIBXFS) $(LIBXCMD) $(LIBHANDLE)
++LTDEPENDENCIES = $(LIBXFS) $(LIBXCMD) $(LIBHANDLE)
+ LLDFLAGS = -static-libtool-libs
+ 
+ ifeq ($(HAVE_FADVISE),yes)
