@@ -1672,6 +1672,7 @@ menu "Real-Time"
 endmenu
 
 menu "Security"
+	source "package/policycoreutils/Config.in"
 	source "package/setools/Config.in"
 endmenu
 
