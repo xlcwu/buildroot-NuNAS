@@ -1581,6 +1581,7 @@ endif
 	source "package/pure-ftpd/Config.in"
 	source "package/putty/Config.in"
 	source "package/quagga/Config.in"
+	source "package/rabbitmq-server/Config.in"
 	source "package/radvd/Config.in"
 	source "package/rp-pppoe/Config.in"
 	source "package/rpcbind/Config.in"
