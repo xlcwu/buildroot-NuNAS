@@ -35,7 +35,7 @@ HOST_QEMU_DEPENDENCIES = host-pkgconf host-python host-zlib host-libglib2 host-p
 #       mips64el        mips64el
 #       powerpc         ppc
 #       powerpc64       ppc64
-#       powerpc64le     ppc64le
+#       powerpc64le     ppc64 (ppc64 supports little-endian)
 #       sh2a            not supported
 #       sh4             sh4
 #       sh4eb           sh4eb
