@@ -1,0 +1,140 @@
+From 1fb15a210a27f7c3011020bedbb623127ec87f29 Mon Sep 17 00:00:00 2001
+From: "Yan, Zheng" <zyan@redhat.com>
+Date: Tue, 12 Jul 2016 10:28:59 +0800
+Subject: [PATCH] compat: define ceph_pthread_{set,get}name()
+
+pthread_setname_np() exists on OSX, but it only accepts a sinlge
+argument. Defining a two parameters version pthread_setname_np()
+does not work.
+
+Signed-off-by: Yan, Zheng <zyan@redhat.com>
+---
+ src/client/SyntheticClient.cc |  2 +-
+ src/common/Thread.cc          |  2 +-
+ src/common/WorkQueue.cc       |  4 ++--
+ src/common/obj_bencher.cc     |  6 +++---
+ src/global/signal_handler.cc  |  3 ++-
+ src/include/compat.h          | 16 ++++++++++------
+ 6 files changed, 19 insertions(+), 14 deletions(-)
+
+diff --git a/src/client/SyntheticClient.cc b/src/client/SyntheticClient.cc
+index f99c5ac..3220267 100644
+--- a/src/client/SyntheticClient.cc
++++ b/src/client/SyntheticClient.cc
+@@ -936,7 +936,7 @@ int SyntheticClient::start_thread()
+ 
+   pthread_create(&thread_id, NULL, synthetic_client_thread_entry, this);
+   assert(thread_id);
+-  pthread_setname_np(thread_id, "client");
++  ceph_pthread_setname(thread_id, "client");
+   return 0;
+ }
+ 
+diff --git a/src/common/Thread.cc b/src/common/Thread.cc
+index 1659115..3e8d343 100644
+--- a/src/common/Thread.cc
++++ b/src/common/Thread.cc
+@@ -85,7 +85,7 @@ void *Thread::entry_wrapper()
+   if (pid && cpuid >= 0)
+     _set_affinity(cpuid);
+ 
+-  pthread_setname_np(pthread_self(), thread_name);
++  ceph_pthread_setname(pthread_self(), thread_name);
+   return entry();
+ }
+ 
+diff --git a/src/common/obj_bencher.cc b/src/common/obj_bencher.cc
+index 1ffa8ce..28520fc 100644
+--- a/src/common/obj_bencher.cc
++++ b/src/common/obj_bencher.cc
+@@ -437,7 +437,7 @@ int ObjBencher::write_bench(int secondsToRun,
+   pthread_t print_thread;
+ 
+   pthread_create(&print_thread, NULL, ObjBencher::status_printer, (void *)this);
+-  pthread_setname_np(print_thread, "write_stat");
++  ceph_pthread_setname(print_thread, "write_stat");
+   lock.Lock();
+   data.finished = 0;
+   data.start_time = ceph_clock_now(cct);
+@@ -673,7 +673,7 @@ int ObjBencher::seq_read_bench(int seconds_to_run, int num_objects, int concurre
+ 
+   pthread_t print_thread;
+   pthread_create(&print_thread, NULL, status_printer, (void *)this);
+-  pthread_setname_np(print_thread, "seq_read_stat");
++  ceph_pthread_setname(print_thread, "seq_read_stat");
+ 
+   utime_t finish_time = data.start_time + time_to_run;
+   //start initial reads
+@@ -902,7 +902,7 @@ int ObjBencher::rand_read_bench(int seconds_to_run, int num_objects, int concurr
+ 
+   pthread_t print_thread;
+   pthread_create(&print_thread, NULL, status_printer, (void *)this);
+-  pthread_setname_np(print_thread, "rand_read_stat");
++  ceph_pthread_setname(print_thread, "rand_read_stat");
+ 
+   utime_t finish_time = data.start_time + time_to_run;
+   //start initial reads
+diff --git a/src/global/signal_handler.cc b/src/global/signal_handler.cc
+index f1b32c9..7c91e85 100644
+--- a/src/global/signal_handler.cc
++++ b/src/global/signal_handler.cc
+@@ -13,6 +13,7 @@
+  */
+ 
+ #include "include/compat.h"
++#include "pthread.h"
+ 
+ #include "common/BackTrace.h"
+ #include "common/debug.h"
+@@ -92,7 +93,7 @@ static void handle_fatal_signal(int signum)
+   // presumably dump core-- will handle it.
+   char buf[1024];
+   char pthread_name[16] = {0}; //limited by 16B include terminating null byte.
+-  int r = pthread_getname_np(pthread_self(), pthread_name, sizeof(pthread_name));
++  int r = ceph_pthread_getname(pthread_self(), pthread_name, sizeof(pthread_name));
+   (void)r;
+ #if defined(__sun)
+   char message[SIG2STR_MAX];
+diff --git a/src/include/compat.h b/src/include/compat.h
+index df9c6be..2035000 100644
+--- a/src/include/compat.h
++++ b/src/include/compat.h
+@@ -116,25 +116,29 @@
+ 
+ #if defined(HAVE_PTHREAD_SETNAME_NP)
+   #if defined(__APPLE__)
+-    #define pthread_setname_np(thread, name) ({ \
++    #define ceph_pthread_setname(thread, name) ({ \
+       int __result = 0;                         \
+       if (thread == pthread_self())             \
+-        __result = pthread_setname_np(name)     \
++        __result = pthread_setname_np(name);    \
+       __result; })
++  #else
++    #define ceph_pthread_setname pthread_setname_np
+   #endif
+ #elif defined(HAVE_PTHREAD_SET_NAME_NP)
+   /* Fix a small name diff */
+-  #define pthread_setname_np pthread_set_name_np
++  #define ceph_pthread_setname pthread_set_name_np
+ #else
+   /* compiler warning free success noop */
+-  #define pthread_setname_np(thread, name) ({ \
++  #define ceph_pthread_setname(thread, name) ({ \
+     int __i = 0;                              \
+     __i; })
+ #endif
+ 
+-#if !defined(HAVE_PTHREAD_GETNAME_NP)
++#if defined(HAVE_PTHREAD_GETNAME_NP)
++  #define ceph_pthread_getname pthread_getname_np
++#else
+   /* compiler warning free success noop */
+-  #define pthread_getname_np(thread, name, len) ({ \
++  #define ceph_pthread_getname(thread, name, len) ({ \
+     if (name != NULL)                              \
+       *name = '\0';                                \
+     0; })
+-- 
+1.9.1
+

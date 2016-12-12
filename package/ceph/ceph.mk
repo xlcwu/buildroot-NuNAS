@@ -9,7 +9,7 @@
 CEPH_VERSION = 5feb806905811add7f936d64fddbefe13d1c1f09
 CEPH_VERSION = 9764da52395923e0b32908d83a9f7304401fee43
 CEPH_VERSION = 0.94.9
-CEPH_VERSION = 10.2.2
+CEPH_VERSION = 10.2.5
 CEPH_SOURCE = ceph-$(CEPH_VERSION).tar.gz
 CEPH_SITE = http://ceph.com/download
 #CEPH_VERSION = bd7989103911796eb5698cf208b0ccdc3370d707
@@ -22,11 +22,20 @@ CEPH_INSTALL_STAGING = YES
 CEPH_AUTORECONF = YES
 ###CEPH_LIBTOOL_PATCH = YES
 
+CEPH_MACHINE=$(BR2_ARCH)
 # we're patching configure.in, but package cannot autoreconf with our version of
 # autotools, so we have to do it manually instead of setting CEPH_AUTORECONF = YES
 define CEPH_RUN_AUTOGEN
 #	cd $(@D) && PATH=$(BR_PATH) ./do_autogen.sh
-	cd $(@D) && PATH=$(BR_PATH) ./autogen.sh
+	cd $(@D) && $(SED) 's,PORTABLE=1,PORTABLE=1 MACHINE=$(CEPH_MACHINE) AR=$(TARGET_AR),' \
+		$(@D)/src/kv/Makefile.am
+	cd $(@D) && $(SED) 's,PORTABLE=1,PORTABLE=1 MACHINE=$(CEPH_MACHINE) AR=$(TARGET_AR),' \
+		$(@D)/src/Makefile.in
+	cd $(@D) && $(SED) 's,PYTHON_CFLAGS=`python-config,PYTHON_CFLAGS=`$(STAGING_DIR)/usr/bin/python2-config,' \
+		$(@D)/configure.ac
+	cd $(@D) && $(SED) 's,PYTHON_LDFLAGS=`python-config,PYTHON_LDFLAGS=`$(STAGING_DIR)/usr/bin/python2-config,' \
+		$(@D)/configure.ac
+	cd $(@D) && PATH=$(BR_PATH) ./autogen.sh -J -T
 	cd $(@D) && $(SED) 's,install-layout=deb,prefix=/usr,' \
                 $(@D)/src/Makefile.in
 	cd $(@D) && $(SED) 's,install-layout=deb,prefix=/usr,' \
@@ -48,8 +57,8 @@ HOST_CEPH_PRE_CONFIGURE_HOOKS += CEPH_RUN_AUTOGEN
 
 CEPH_DEPENDENCIES += host-automake host-autoconf host-libtool \
 			python-setuptools host-python-setuptools host-python-cython host-python-pip \
-			libnspr icu snappy leveldb util-linux systemd keyutils libnss \
-			gperftools libatomic_ops xfsprogs btrfs-progs boost \
+			libnspr icu snappy leveldb util-linux keyutils libnss \
+			libatomic_ops xfsprogs btrfs-progs boost \
 			libfcgi libcurl libedit expat glibmm libsigc
 HOST_CEPH_DEPENDENCIES += host-automake host-autoconf host-libtool host-snappy
 
@@ -79,6 +88,8 @@ CEPH_CONF_OPTS =		\
 	--with-evenfd		\
 	--with-cython		\
 	--with-nss		\
+	--with-reentrant-strsignal \
+	--with-librocksdb-static \
 	--with-ocf
 
 ifeq ($(BR2_PACKAGE_LIBFUSE),y)
@@ -103,7 +114,7 @@ endif
 
 ifeq ($(BR2_PACKAGE_CEPH_ALL),y)
 CEPH_DEPENDENCIES += jemalloc
-CEPH_CONF_OPTS += --with-jemalloc
+CEPH_CONF_OPTS += --with-jemalloc --without-tcmalloc
 endif
 
 $(eval $(autotools-package))

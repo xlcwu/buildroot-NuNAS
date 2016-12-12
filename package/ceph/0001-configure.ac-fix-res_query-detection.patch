@@ -1,0 +1,71 @@
+From 955c32c5d8a7170c7107e9618c8655df80c6bbae Mon Sep 17 00:00:00 2001
+From: John Coyle <dx9err@gmail.com>
+Date: Sat, 5 Mar 2016 21:42:12 -0500
+Subject: [PATCH] configure.ac: fix res_query detection
+
+Signed-off-by: John Coyle <dx9err@gmail.com>
+---
+ configure.ac | 26 +++++++++++++++-----------
+ 1 file changed, 15 insertions(+), 11 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index b83cdf9..bda5f81 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -354,38 +354,42 @@ if test x"$linux" = x"yes"; then
+ fi
+ 
+ #
+-# Check for res_nquery in libresolv. There are several variations. On OSX
++# Check for res_nquery or res_query in libresolv. There are several variations. On OSX
+ # res_nquery is a macro defined in resolv.h, so the typical AC_CHECK_LIB
+-# doesn't work. On FreeBSD res_nquery can be found in libc. The required
+-# library for linking (if any) is defined RESOLV_LIBS.
++# doesn't work. On FreeBSD res_nquery can be found in libc. On Alpine res_query can be
++# found in libc. The required library for linking (if any) is defined RESOLV_LIBS.
+ #
+ AC_CHECK_HEADER([resolv.h], [], [], [#include <netinet/in.h>])
+ 
+ AC_DEFUN([CHECK_RESOLV_LIBS], [{
+-  AC_MSG_CHECKING([if res_nquery will link (LIBS=$1)])
++  AC_MSG_CHECKING([if $1 will link (LIBS=$3)])
+   saved_LIBS="${LIBS}"
+-  LIBS="$1"
++  LIBS="$3"
+   AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+         #include <netinet/in.h>
+         #include <resolv.h>
+-      ]], [[res_nquery(0, 0, 0, 0, 0, 0);]])],
++      ]], [[$1$2;]])],
+       [AC_MSG_RESULT([yes])
+-      [$2]],
++      AC_DEFINE(AS_TR_CPP([HAVE_$1]), 1, [Define if you have $1])
++      [$4]],
+       AC_MSG_RESULT([no]))
+   LIBS="${saved_LIBS}"
+ }])
+ 
+ RESOLV_LIBS=""
+-CHECK_RESOLV_LIBS([$RESOLV_LIBS], [resolv_libs="ok"])
++CHECK_RESOLV_LIBS([res_nquery], [(0, 0, 0, 0, 0, 0)], [$RESOLV_LIBS], [resolv_libs="ok"])
+ if test x"$resolv_libs" != "xok"; then
+   RESOLV_LIBS="-lresolv"
+-  CHECK_RESOLV_LIBS([$RESOLV_LIBS], [resolv_libs="ok"])
++  CHECK_RESOLV_LIBS([res_nquery], [(0, 0, 0, 0, 0, 0)], [$RESOLV_LIBS], [resolv_libs="ok"])
+   if test x"$resolv_libs" != "xok"; then
+-    AC_MSG_FAILURE([no resolv library found])
++    RESOLV_LIBS=""
++    CHECK_RESOLV_LIBS([res_query], [(0, 0, 0, 0, 0)], [$RESOLV_LIBS], [resolv_libs="ok"])
++    if test x"$resolv_libs" != "xok"; then
++      AC_MSG_FAILURE([no resolv library found])
++    fi
+   fi
+ fi
+ AC_SUBST([RESOLV_LIBS])
+-AC_DEFINE(HAVE_RES_NQUERY, 1, [Define if you have res_nquery])
+ 
+ dnl check for libkeyutils on linux
+ KEYUTILS_LIB=""
+-- 
+1.9.1
+

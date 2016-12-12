@@ -1,0 +1,40 @@
+From 61e3ac3d0c6e4682356647f36c57452170814934 Mon Sep 17 00:00:00 2001
+From: Willem Jan Withagen <wjw@digiware.nl>
+Date: Tue, 17 May 2016 11:03:50 +0200
+Subject: [PATCH] RWLock.h: PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP not
+ available
+
+ - In FreeBSD
+
+Signed-off-by: Willem Jan Withagen <wjw@digiware.nl>
+---
+ src/common/RWLock.h | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/common/RWLock.h b/src/common/RWLock.h
+index eddfa17..befc5a5 100644
+--- a/src/common/RWLock.h
++++ b/src/common/RWLock.h
+@@ -41,6 +41,7 @@ public:
+   RWLock(const std::string &n, bool track_lock=true, bool ld=true, bool prioritize_write=false)
+     : name(n), id(-1), nrlock(0), nwlock(0), track(track_lock),
+       lockdep(ld) {
++#if defined(PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)
+     if (prioritize_write) {
+       pthread_rwlockattr_t attr;
+       pthread_rwlockattr_init(&attr);
+@@ -50,7 +51,10 @@ public:
+       pthread_rwlockattr_setkind_np(&attr,
+           PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+       pthread_rwlock_init(&L, &attr);
+-    } else {
++    } else 
++#endif 
++    // Next block is in {} to possibly connect to the above if when code is used.
++    {
+       pthread_rwlock_init(&L, NULL);
+     }
+     ANNOTATE_BENIGN_RACE_SIZED(&id, sizeof(id), "RWLock lockdep id");
+-- 
+1.9.1
+

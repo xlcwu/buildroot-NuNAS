@@ -1,0 +1,54 @@
+Last-Update: 2014-10-31
+Forwarded: no
+Author: Dmitry Smirnov <onlyjob@member.fsf.org>
+Description: disable tests that depend on network...
+
+--- a/src/test/Makefile.am
++++ b/src/test/Makefile.am
+@@ -63,6 +63,7 @@ bin_DEBUGPROGRAMS += ceph_bench_log
+ 
+ ## Unit tests
+ 
++if WITH_CLUSTER_TESTS
+ check_SCRIPTS += \
+ 	test/ceph_objectstore_tool.py \
+ 	test/test-ceph-helpers.sh \
+@@ -96,6 +97,8 @@ check_SCRIPTS += \
+         test/test_pidfile.sh \
+ 	test/test_subman.sh
+ 
++endif
++
+ EXTRA_DIST += \
+ 	$(srcdir)/test/python/brag-client/setup.py \
+ 	$(srcdir)/test/python/brag-client/tox.ini \
+--- a/configure.ac
++++ b/configure.ac
+@@ -1349,6 +1349,13 @@ AC_LANG_POP([C++])
+ 
+ AM_CONDITIONAL(WITH_BUILD_TESTS, test "$WITH_BUILD_TESTS" = "1")
+ 
++AC_ARG_WITH([cluster-tests],
++    [AS_HELP_STRING([--with-cluster-tests], [enables cluster tests])],
++    [],
++    [with_cluster_tests=no]
++)
++AM_CONDITIONAL(WITH_CLUSTER_TESTS, [ test "$with_cluster_tests" = "yes" ])
++
+ AM_PATH_PYTHON([2.4],
+ 	[], [AC_MSG_FAILURE([Failed to find Python 2.4 or newer])])
+ 
+--- a/src/test/erasure-code/Makefile.am
++++ b/src/test/erasure-code/Makefile.am
+@@ -1,9 +1,11 @@
+ if ENABLE_SERVER
+ if WITH_OSD
+ 
++if WITH_CLUSTER_TESTS
+ check_SCRIPTS += \
+ 	test/erasure-code/test-erasure-code.sh \
+ 	test/erasure-code/test-erasure-eio.sh
++endif
+ 
+ noinst_HEADERS += \
+ 	test/erasure-code/ceph_erasure_code_benchmark.h
