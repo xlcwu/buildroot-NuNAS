@@ -216,6 +216,13 @@ PYTHON_POST_INSTALL_TARGET_HOOKS += PYTHON_INSTALL_TARGET_PYTHON_SYMLINK
 # Always install the python-config symlink in the staging tree
 define PYTHON_INSTALL_STAGING_PYTHON_CONFIG_SYMLINK
 	ln -sf python2-config $(STAGING_DIR)/usr/bin/python-config
+	$(SED) 's|^LIBDIR=.*|LIBDIR= $(STAGING_DIR)/usr/lib|' \
+		$(STAGING_DIR)/usr/lib/python$(PYTHON_VERSION_MAJOR)/config/Makefile
+	$(SED) 's,^prefix_build="/usr",prefix_build="$(STAGING_DIR)/usr",' \
+		-e 's,^exec_prefix_build="/usr",exec_prefix_build="$${prefix}",' \
+		-e 's,LIBPL=$$(echo\ "/usr/lib/python2.7/config",LIBPL=$$(echo\ "$(STAGING_DIR)/usr/lib/python2.7/config",' \
+		-e 's,CFLAGS=$$(echo "-D_LARGEFILE_SOURCE,CFLAGS=$$(echo "-I$(STAGING_DIR)/usr/include -D_LARGEFILE_SOURCE,' \
+		$(STAGING_DIR)/usr/bin/python2-config
 endef
 
 PYTHON_POST_INSTALL_STAGING_HOOKS += PYTHON_INSTALL_STAGING_PYTHON_CONFIG_SYMLINK
