@@ -1,0 +1,16 @@
+Last-Update: 2014-05-12
+Forwarded: not-needed
+Bug-Ceph: http://tracker.ceph.com/issues/8291
+Author: Yan, Zheng <ukernel@gmail.com>
+Description: fix fuse-client hang after wake-up from suspend.
+
+--- a/src/client/Client.cc
++++ b/src/client/Client.cc
+@@ -12014,6 +12014,7 @@ void Client::ms_handle_remote_reset(Conn
+ 	case MetaSession::STATE_OPEN:
+ 	  ldout(cct, 1) << "reset from mds we were open; mark session as stale" << dendl;
+ 	  s->state = MetaSession::STATE_STALE;
++	  _closed_mds_session(s);
+ 	  break;
+ 
+ 	case MetaSession::STATE_NEW:

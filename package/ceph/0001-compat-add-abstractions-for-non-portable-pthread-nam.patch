@@ -1,0 +1,116 @@
+From 3ba630636de437f7c5b69e620b7e3275eb5ab0a2 Mon Sep 17 00:00:00 2001
+From: John Coyle <dx9err@gmail.com>
+Date: Fri, 24 Jun 2016 13:49:42 -0400
+Subject: [PATCH] compat: add abstractions for non portable pthread name funcs
+
+Supports GNU, FreeBSD, OSX, and Alpine.
+
+Signed-off-by: John Coyle <dx9err@gmail.com>
+---
+ CMakeLists.txt                |  3 +++
+ configure.ac                  |  1 +
+ src/client/SyntheticClient.cc |  2 ++
+ src/common/WorkQueue.cc       |  6 ++----
+ src/global/signal_handler.cc  |  4 ++--
+ src/include/compat.h          | 30 ++++++++++++++++++++++++++++--
+ src/include/config-h.in.cmake |  9 +++++++++
+ 7 files changed, 47 insertions(+), 8 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index b83cdf9..0845fcb 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1145,6 +1145,7 @@ LIBS="$PTHREAD_LIBS $LIBS"
+ CFLAGS="$PTHREAD_CFLAGS $CFLAGS"
+ AC_CHECK_FUNC([pthread_spin_init],
+   [AC_DEFINE(HAVE_PTHREAD_SPINLOCK, 1, [Define if you have pthread_spin_init])])
++AC_CHECK_FUNCS([pthread_getname_np pthread_setname_np pthread_set_name_np])
+ LIBS="$saved_LIBS"
+ CFLAGS="$saved_CFLAGS"
+ 
+diff --git a/src/client/SyntheticClient.cc b/src/client/SyntheticClient.cc
+index b2ef93a..7e324fd 100644
+--- a/src/client/SyntheticClient.cc
++++ b/src/client/SyntheticClient.cc
+@@ -12,6 +12,8 @@
+  * 
+  */
+ 
++#include "include/compat.h"
++
+ #include <iostream>
+ #include <sstream>
+ using namespace std;
+diff --git a/src/common/WorkQueue.cc b/src/common/WorkQueue.cc
+index 6fc468a..3430491 100644
+--- a/src/common/WorkQueue.cc
++++ b/src/common/WorkQueue.cc
+@@ -12,6 +12,8 @@
+  * 
+  */
+ 
++#include "include/compat.h"
++
+ #include <sstream>
+ 
+ #include "include/types.h"
+diff --git a/src/global/signal_handler.cc b/src/global/signal_handler.cc
+index a01a78a..5b65065 100644
+--- a/src/global/signal_handler.cc
++++ b/src/global/signal_handler.cc
+@@ -12,6 +12,8 @@
+  *
+  */
+ 
++#include "include/compat.h"
++
+ #include "common/BackTrace.h"
+ #include "common/debug.h"
+ #include "global/pidfile.h"
+diff --git a/src/include/compat.h b/src/include/compat.h
+index 1df098b..7dc2833 100644
+--- a/src/include/compat.h
++++ b/src/include/compat.h
+@@ -12,6 +12,8 @@
+ #ifndef CEPH_COMPAT_H
+ #define CEPH_COMPAT_H
+ 
++#include <limits.h>
++
+ #if defined(__FreeBSD__)
+ 
+ /* Make sure that ENODATA is defined in the correct way */
+@@ -112,4 +112,30 @@
+ #define MSG_DONTWAIT MSG_NONBLOCK
+ #endif
+ 
++#if defined(HAVE_PTHREAD_SETNAME_NP)
++  #if defined(__APPLE__)
++    #define pthread_setname_np(thread, name) ({ \
++      int __result = 0;                         \
++      if (thread == pthread_self())             \
++        __result = pthread_setname_np(name)     \
++      __result; })
++  #endif
++#elif defined(HAVE_PTHREAD_SET_NAME_NP)
++  /* Fix a small name diff */
++  #define pthread_setname_np pthread_set_name_np
++#else
++  /* compiler warning free success noop */
++  #define pthread_setname_np(thread, name) ({ \
++    int __i = 0;                              \
++    __i; })
++#endif
++
++#if !defined(HAVE_PTHREAD_GETNAME_NP)
++  /* compiler warning free success noop */
++  #define pthread_getname_np(thread, name, len) ({ \
++    if (name != NULL)                              \
++      *name = '\0';                                \
++    0; })
++#endif
++
+ #endif /* !CEPH_COMPAT_H */
+-- 
+1.9.1
+

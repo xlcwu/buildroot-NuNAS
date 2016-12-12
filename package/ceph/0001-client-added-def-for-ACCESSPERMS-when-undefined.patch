@@ -1,0 +1,30 @@
+From 379a3060921ae65657d025597a0b7988fd0fd6bd Mon Sep 17 00:00:00 2001
+From: John Coyle <dx9err@gmail.com>
+Date: Fri, 26 Feb 2016 10:48:51 -0500
+Subject: [PATCH] client: added def for ACCESSPERMS when undefined
+
+musl libc does not provide ACCESSPERMS
+
+Signed-off-by: John Coyle <dx9err@gmail.com>
+---
+ src/client/posix_acl.cc | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/client/posix_acl.cc b/src/client/posix_acl.cc
+index c5277ab..d92d17a 100644
+--- a/src/client/posix_acl.cc
++++ b/src/client/posix_acl.cc
+@@ -3,6 +3,10 @@
+ #include "posix_acl.h"
+ #include "UserGroups.h"
+ 
++#ifndef ACCESSPERMS
++#define ACCESSPERMS (S_IRWXU|S_IRWXG|S_IRWXO)
++#endif
++
+ int posix_acl_check(const void *xattr, size_t size)
+ {
+   const acl_ea_header *header;
+-- 
+1.9.1
+

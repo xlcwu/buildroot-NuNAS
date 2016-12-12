@@ -1,0 +1,194 @@
+From 62be9268de5e9c9a08bdb977a7dab1ab9c55b2be Mon Sep 17 00:00:00 2001
+From: Willem Jan Withagen <wjw@digiware.nl>
+Date: Tue, 17 May 2016 12:01:31 +0200
+Subject: [PATCH] compat.h: added a set of extras for FreeBSD <> Linux
+ compatability
+
+If this file is used, it is wise to include it a fist include file
+at the top of the code.
+
+Things added to compat.h:
+ - ENODATA versus ENOATTR
+   This is a very tricky one since ENOATTR is also defined in boost,
+   but with a totally diferent value again. We need to make sure
+   that the same value is used alt all places.
+ - O_DSYNC(freeBSD) versus O_SYNC(Linux)
+   fortunately they have the same value.
+ - HOST_NAME_MAX is undefined in FreeBSD
+   So hardcoded to the value that Linux uses
+ - pthread_set_name_np(FreeBSD) versus pthread_setname_np(Linux)
+   and the NON-Posix code lives in a separate include file
+ - Some compatiblility code for CLOCK_MONOTONIC_COARSE to rewite
+   to the FreeBSD equivalent CLOCK_MONOTONIC_FAST
+
+compat.h is added to:
+ * src/common/Thread.cc
+ * src/common/obj_bencher.cc
+ * src/crush/CrushLocation.cc
+ * src/include/compat.h
+ * src/include/rados/librados.h
+ * src/os/filestore/FileStore.cc
+ * src/test/system/systest_runnable.cc
+
+Signed-off-by: Willem Jan Withagen <wjw@digiware.nl>
+---
+ src/common/Thread.cc                |  2 ++
+ src/common/obj_bencher.cc           |  1 +
+ src/crush/CrushLocation.cc          |  1 +
+ src/include/compat.h                | 48 +++++++++++++++++++++++++++++++++++++
+ src/include/rados/librados.h        |  1 +
+ src/os/filestore/FileStore.cc       |  2 +-
+ src/test/system/systest_runnable.cc |  5 +---
+ 7 files changed, 55 insertions(+), 5 deletions(-)
+
+diff --git a/src/common/Thread.cc b/src/common/Thread.cc
+index c1c3be5..1659115 100644
+--- a/src/common/Thread.cc
++++ b/src/common/Thread.cc
+@@ -12,6 +12,7 @@
+  *
+  */
+ 
++#include "include/compat.h"
+ #include "common/Thread.h"
+ #include "common/code_environment.h"
+ #include "common/debug.h"
+@@ -22,6 +23,7 @@
+ #include <errno.h>
+ #include <iostream>
+ #include <pthread.h>
++
+ #include <signal.h>
+ #include <sstream>
+ #include <stdlib.h>
+diff --git a/src/common/obj_bencher.cc b/src/common/obj_bencher.cc
+index 0971ec9..b4ebc03 100644
+--- a/src/common/obj_bencher.cc
++++ b/src/common/obj_bencher.cc
+@@ -15,6 +15,7 @@
+  * try and bench on a pool you don't have permission to access
+  * it will just loop forever.
+  */
++#include "include/compat.h"
+ #include "common/Cond.h"
+ #include "obj_bencher.h"
+ 
+diff --git a/src/include/compat.h b/src/include/compat.h
+index ec5905c..1df098b 100644
+--- a/src/include/compat.h
++++ b/src/include/compat.h
+@@ -13,8 +13,56 @@
+ #define CEPH_COMPAT_H
+ 
+ #if defined(__FreeBSD__)
++
++/* Make sure that ENODATA is defined in the correct way */
++#ifndef ENODATA
+ #define	ENODATA	ENOATTR
++#else
++#if (ENODATA == 9919)
++// #warning ENODATA already defined to be 9919, redefining to fix
++// Silencing this warning because it fires at all files where compat.h
++// is included after boost files.
++//
++// This value stems from the definition in the boost library
++// And when this case occurs it is due to the fact that boost files
++// are included before this file. Redefinition might not help in this
++// case since already parsed code has evaluated to the wrong value.
++// This would warrrant for d definition that would actually be evaluated
++// at the location of usage and report a possible confict.
++// This is left up to a future improvement
++#elif (ENODATA != 87)
++#warning ENODATA already defined to a value different from 87 (ENOATRR), refining to fix
++#endif
++#undef ENODATA
++#define ENODATA ENOATTR
++#endif
++
++#ifndef MSG_MORE
+ #define	MSG_MORE 0
++#endif
++
++#ifndef O_DSYNC
++#define O_DSYNC O_SYNC
++#endif
++
++#ifndef HOST_NAME_MAX
++#define HOST_NAME_MAX 64
++#endif
++
++// Fix clock accuracy
++#if !defined(CLOCK_MONOTONIC_COARSE)
++#if defined(CLOCK_MONOTONIC_FAST)
++#define CLOCK_MONOTONIC_COARSE CLOCK_MONOTONIC_FAST
++#else
++#define CLOCK_MONOTONIC_COARSE CLOCK_MONOTONIC
++#endif
++#endif
++
++/* Fix a small name diff */
++#define pthread_setname_np pthread_set_name_np
++/* And include the extra required include file */
++#include <pthread_np.h>
++
+ #endif /* !__FreeBSD__ */
+ 
+ #if defined(__APPLE__)
+diff --git a/src/include/rados/librados.h b/src/include/rados/librados.h
+index b3d4818..d72f9e60 100644
+--- a/src/include/rados/librados.h
++++ b/src/include/rados/librados.h
+@@ -19,6 +19,7 @@
+ extern "C" {
+ #endif
+ 
++#include "../compat.h"
+ #include <netinet/in.h>
+ #if defined(__linux__)
+ #include <linux/types.h>
+diff --git a/src/os/filestore/FileStore.cc b/src/os/filestore/FileStore.cc
+index 7939dfc..c34a722 100644
+--- a/src/os/filestore/FileStore.cc
++++ b/src/os/filestore/FileStore.cc
+@@ -12,6 +12,7 @@
+  * Foundation.  See file COPYING.
+  *
+  */
++#include "include/compat.h"
+ #include "include/int_types.h"
+ 
+ #include <unistd.h>
+@@ -31,7 +32,6 @@
+ #include <iostream>
+ #include <map>
+ 
+-#include "include/compat.h"
+ #include "include/linux_fiemap.h"
+ 
+ #include "common/xattr.h"
+diff --git a/src/test/system/systest_runnable.cc b/src/test/system/systest_runnable.cc
+index c7ed6aa..9545339 100644
+--- a/src/test/system/systest_runnable.cc
++++ b/src/test/system/systest_runnable.cc
+@@ -12,6 +12,7 @@
+  *
+  */
+ 
++#include "include/compat.h"
+ #include "common/errno.h"
+ #include "include/atomic.h"
+ #include "systest_runnable.h"
+@@ -31,10 +32,6 @@
+ #include <unistd.h>
+ #include <vector>
+ 
+-#if defined(__FreeBSD__)
+-#include <pthread_np.h>
+-#endif
+-
+ using std::ostringstream;
+ using std::string;
+ 
+-- 
+1.9.1
+

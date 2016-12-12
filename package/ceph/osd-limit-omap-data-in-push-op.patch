@@ -1,0 +1,40 @@
+From 56064c5cb645254574dbad00e6c16b783115bb93 Mon Sep 17 00:00:00 2001
+From: Wanlong Gao <wanlong.gao@easystack.cn>
+Date: Thu, 23 Jun 2016 20:04:25 +0800
+Subject: [PATCH] osd: limit omap data in push op
+
+We already have the config osd_recovery_max_chunk to limit the total
+size of omap entries and omap data. But we need an individual config
+to limit the number of omap entries independently. We call this config
+osd_recovery_max_omap_entries_per_chunk here with the default number
+of 64000.
+
+Signed-off-by: Wanlong Gao <wanlong.gao@easystack.cn>
+---
+ src/common/config_opts.h     | 1 +
+ src/osd/ReplicatedBackend.cc | 4 +++-
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+--- a/src/common/config_opts.h
++++ b/src/common/config_opts.h
+@@ -749,6 +749,7 @@ OPTION(osd_recovery_delay_start, OPT_FLO
+ OPTION(osd_recovery_max_active, OPT_INT, 3)
+ OPTION(osd_recovery_max_single_start, OPT_INT, 1)
+ OPTION(osd_recovery_max_chunk, OPT_U64, 8<<20)  // max size of push chunk
++OPTION(osd_recovery_max_omap_entries_per_chunk, OPT_U64, 64000) // max number of omap entries per chunk; 0 to disable limit
+ OPTION(osd_copyfrom_max_chunk, OPT_U64, 8<<20)   // max size of a COPYFROM chunk
+ OPTION(osd_push_per_object_cost, OPT_U64, 1000)  // push cost per object
+ OPTION(osd_max_push_cost, OPT_U64, 8<<20)  // max size of push message
+--- a/src/osd/ReplicatedBackend.cc
++++ b/src/osd/ReplicatedBackend.cc
+@@ -1985,7 +1985,9 @@ int ReplicatedBackend::build_push_op(con
+ 	 iter->valid();
+ 	 iter->next(false)) {
+       if (!out_op->omap_entries.empty() &&
+-	  available <= (iter->key().size() + iter->value().length()))
++	  ((cct->_conf->osd_recovery_max_omap_entries_per_chunk > 0 &&
++	    out_op->omap_entries.size() >= cct->_conf->osd_recovery_max_omap_entries_per_chunk) ||
++	   available <= iter->key().size() + iter->value().length()))
+ 	break;
+       out_op->omap_entries.insert(make_pair(iter->key(), iter->value()));
+ 

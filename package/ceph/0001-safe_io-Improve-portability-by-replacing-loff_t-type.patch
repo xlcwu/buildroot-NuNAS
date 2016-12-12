@@ -1,0 +1,60 @@
+From bcfc8eefd638d907953bcd47ee384db738bf9bd2 Mon Sep 17 00:00:00 2001
+From: John Coyle <dx9err@gmail.com>
+Date: Tue, 8 Mar 2016 14:04:43 -0500
+Subject: [PATCH] safe_io: Improve portability by replacing loff_t type usage
+ with off_t.
+
+64-bit behavior on glibc is enforced with __USE_FILE_OFFSET64 compiler error.
+
+Signed-off-by: John Coyle <dx9err@gmail.com>
+---
+ src/common/safe_io.c | 6 +++---
+ src/common/safe_io.h | 6 +++---
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/src/common/safe_io.c b/src/common/safe_io.c
+index 9367a9a..a4a31aa 100644
+--- a/src/common/safe_io.c
++++ b/src/common/safe_io.c
+@@ -119,7 +119,7 @@ ssize_t safe_pwrite(int fd, const void *buf, size_t count, off_t offset)
+ }
+ 
+ #ifdef CEPH_HAVE_SPLICE
+-ssize_t safe_splice(int fd_in, loff_t *off_in, int fd_out, loff_t *off_out,
++ssize_t safe_splice(int fd_in, off_t *off_in, int fd_out, off_t *off_out,
+ 		    size_t len, unsigned int flags)
+ {
+   size_t cnt = 0;
+@@ -142,8 +142,8 @@ ssize_t safe_splice(int fd_in, loff_t *off_in, int fd_out, loff_t *off_out,
+   return cnt;
+ }
+ 
+-ssize_t safe_splice_exact(int fd_in, loff_t *off_in, int fd_out,
+-			  loff_t *off_out, size_t len, unsigned int flags)
++ssize_t safe_splice_exact(int fd_in, off_t *off_in, int fd_out,
++			  off_t *off_out, size_t len, unsigned int flags)
+ {
+   ssize_t ret = safe_splice(fd_in, off_in, fd_out, off_out, len, flags);
+   if (ret < 0)
+diff --git a/src/common/safe_io.h b/src/common/safe_io.h
+index c45589e..9ba34b6 100644
+--- a/src/common/safe_io.h
++++ b/src/common/safe_io.h
+@@ -41,11 +41,11 @@ extern "C" {
+    * Similar to the above (non-exact version) and below (exact version).
+    * See splice(2) for parameter descriptions.
+    */
+-  ssize_t safe_splice(int fd_in, loff_t *off_in, int fd_out, loff_t *off_out,
++  ssize_t safe_splice(int fd_in, off_t *off_in, int fd_out, off_t *off_out,
+ 		      size_t len, unsigned int flags)
+     WARN_UNUSED_RESULT;
+-  ssize_t safe_splice_exact(int fd_in, loff_t *off_in, int fd_out,
+-			    loff_t *off_out, size_t len, unsigned int flags)
++  ssize_t safe_splice_exact(int fd_in, off_t *off_in, int fd_out,
++			    off_t *off_out, size_t len, unsigned int flags)
+     WARN_UNUSED_RESULT;
+ #endif
+ 
+-- 
+1.9.1
+

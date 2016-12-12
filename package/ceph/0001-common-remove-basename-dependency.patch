@@ -1,0 +1,50 @@
+From 4e530e66df871e3566a5aea3ebe328e3d05f3193 Mon Sep 17 00:00:00 2001
+From: John Coyle <dx9err@gmail.com>
+Date: Sat, 27 Feb 2016 14:06:09 -0500
+Subject: [PATCH] common: remove basename() dependency
+
+Alpine linux only provides POSIX interface. Current code does not adhere to POSIX basename(char*) expectation.
+
+http://pubs.opengroup.org/onlinepubs/9699919799/
+
+Signed-off-by: John Coyle <dx9err@gmail.com>
+---
+ src/common/config.cc | 25 ++++++++++---------------
+ 1 file changed, 10 insertions(+), 15 deletions(-)
+
+diff --git a/src/common/config.cc b/src/common/config.cc
+index 4bc0a3b..ac2a407 100644
+--- a/src/common/config.cc
++++ b/src/common/config.cc
+@@ -267,18 +263,17 @@ int md_config_t::parse_config_files_impl(const std::list<std::string> &conf_file
+      * If cluster name is not set yet, use the prefix of the
+      * basename of configuration file as cluster name.
+      */
+-    const char *fn = c->c_str();
+-    std::string name(basename(fn));
+-    int pos = name.find(".conf");
+-    if (pos < 0) {
+-      /*
+-       * If the configuration file does not follow $cluster.conf
+-       * convention, we do the last try and assign the cluster to
+-       * 'ceph'.
+-       */
+-      cluster = "ceph";
++    auto start = c->rfind('/') + 1;
++    auto end = c->find(".conf", start);
++    if (end == c->npos) {
++        /*
++         * If the configuration file does not follow $cluster.conf
++         * convention, we do the last try and assign the cluster to
++         * 'ceph'.
++         */
++        cluster = "ceph";
+     } else {
+-      cluster = name.substr(0, pos);      
++      cluster = c->substr(start, end - start);
+     }
+   }
+ 
+-- 
+1.9.1
+
