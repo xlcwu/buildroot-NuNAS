@@ -49,23 +49,6 @@ endef
 XFSPROGS_POST_CONFIGURE_HOOKS += XFSPROGS_ENABLE_SHARED
 endif
 
-# xfsprogs links some of its programs to libs from util-linux, which use
-# i18n functions. For shared-only builds, that's automatically pulled in.
-# Static builds need some help, though...
-#
-# No need to depend on gettext in this case: xfsprogs does not use it for
-# itself; util-linux does need it and has it in its own dependencies.
-#
-# xfsprogs' buildsystem uses hand-made Makefiles, not automake, and they
-# do not use the LIBS variable set by configure. So we use EXTRALIBS that
-# is added by our patch.
-#
-# It is not needed to propagate the EXTRALIBS to the install step.
-ifeq ($(BR2_STATIC_LIBS)$(BR2_SHARED_STATIC_LIBS)$(BR2_NEEDS_GETTEXT_IF_LOCALE),yy)
-XFSPROGS_CONF_OPTS += LIBS=-lintl
-XFSPROGS_MAKE_OPTS = EXTRALIBS=-lintl
-endif
-
 XFSPROGS_INSTALL_TARGET_OPTS = DIST_ROOT=$(TARGET_DIR) install
 XFSPROGS_INSTALL_TARGET_OPTS += -j1
 XFSPROGS_INSTALL_STAGING = YES
