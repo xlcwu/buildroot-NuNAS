@@ -9,6 +9,10 @@ GLIBC_VERSION =  arc-2017.09-release
 GLIBC_SITE = $(call github,foss-for-synopsys-dwc-arc-processors,glibc,$(GLIBC_VERSION))
 GLIBC_SOURCE = glibc-$(GLIBC_VERSION).tar.gz
 else
+GLIBC_VERSION = $(call qstrip,$(BR2_GLIBC_VERSION_STRING))
+GLIBC_SITE = $(BR2_GNU_MIRROR)/libc
+GLIBC_SOURCE = glibc-$(GLIBC_VERSION).tar.xz
+ifeq ($(BR2_GLIBC_VERSION_STRING),2.26)
 # Generate version string using:
 #   git describe --match 'glibc-*' --abbrev=40 origin/release/MAJOR.MINOR/master
 GLIBC_VERSION = glibc-2.26-73-g4b692dffb95ac4812b161eb6a16113d7e824982e
@@ -20,8 +24,9 @@ GLIBC_VERSION = glibc-2.26-73-g4b692dffb95ac4812b161eb6a16113d7e824982e
 # Then check that the mirror has been synced already (happens once a day.)
 GLIBC_SITE = https://github.com/bminor/glibc.git
 GLIBC_SITE_METHOD = git
+GLIBC_SOURCE = glibc-$(GLIBC_VERSION).tar.gz
 endif
-
+endif
 GLIBC_SRC_SUBDIR = .
 
 GLIBC_LICENSE = GPL-2.0+ (programs), LGPL-2.1+, BSD-3-Clause, MIT (library)
