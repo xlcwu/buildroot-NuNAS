@@ -5,6 +5,7 @@
 ################################################################################
 
 XFSPROGS_VERSION = 4.11.0
+XFSPROGS_VERSION = 4.9.0
 XFSPROGS_SITE = $(BR2_KERNEL_MIRROR)/linux/utils/fs/xfs/xfsprogs
 XFSPROGS_SOURCE = xfsprogs-$(XFSPROGS_VERSION).tar.xz
 
@@ -42,7 +43,7 @@ XFSPROGS_CONF_OPTS += --enable-shared --disable-static
 XFSPROGS_POST_CONFIGURE_HOOKS += XFSPROGS_ENABLE_SHARED
 
 define XFSPROGS_ENABLE_SHARED
-	find -name Makefile -exec \
+	find $(@D) -name Makefile -exec \
 		sed -i -r -e '/^LLDFLAGS [+]?= -static(-libtool-libs)?$$/d' {} +
 endef
 endif
