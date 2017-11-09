@@ -1,0 +1,22 @@
+From ad3153850ef6d00c33adbc57d9a60605c07beab2 Mon Sep 17 00:00:00 2001
+From: Raymond <yhung124@gmail.com>
+Date: Tue, 11 Jul 2017 09:45:16 +0000
+Subject: [PATCH] Use fixed ceph version
+
+---
+ src/make_version | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/make_version b/src/make_version
+index 4834579..e9086c6 100755
+--- a/src/make_version
++++ b/src/make_version
+@@ -5,6 +5,7 @@
+ NO_VERSION=0
+
+ is_git() {
++    return 1
+     type git > /dev/null 2>&1
+     if [ $? -ne 0 ]; then
+         echo "Could not find git command. Assuming this is not a git repository, not updating .git_version"
+
