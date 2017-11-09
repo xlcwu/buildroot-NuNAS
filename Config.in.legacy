@@ -584,7 +584,7 @@ config BR2_PACKAGE_PORTMAP
 
 config BR2_BINUTILS_VERSION_2_25_X
 	bool "binutils version 2.25 support removed"
-	select BR2_LEGACY
+#	select BR2_LEGACY
 	help
 	  Support for binutils version 2.25 has been removed. The
 	  current default version (2.27 or later) has been selected
