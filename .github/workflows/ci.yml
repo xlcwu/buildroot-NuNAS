@@ -30,11 +30,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-      apt-get install build-essential ncurses-base ncurses-bin libncurses5-dev dialog
+      apt install build-essential ncurses-base ncurses-bin libncurses5-dev dialog
 
     - name: configure
       run: |
-      echo '---start configure---'
       mkdir buildroot_{{github.event.inputs.board}}
       cd buildroot_{{github.event.inputs.board}}/
       make -C ../buildroot O=$(pwd) ${{github.event.inputs.board}}_defconfig
