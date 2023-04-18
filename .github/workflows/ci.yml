@@ -1,4 +1,4 @@
-name: Buildroot CI
+name: Buildroot-CI
 
 on:
   push:
@@ -30,18 +30,18 @@ jobs:
 
     - name: Install dependencies
       run: |
-      apt install build-essential ncurses-base ncurses-bin libncurses5-dev dialog
+        apt install build-essential ncurses-base ncurses-bin libncurses5-dev dialog
 
-    - name: configure
+    - name: Board configure
       run: |
-      mkdir buildroot_{{github.event.inputs.board}}
-      cd buildroot_{{github.event.inputs.board}}/
-      make -C ../buildroot O=$(pwd) ${{github.event.inputs.board}}_defconfig
+        mkdir buildroot_{{github.event.inputs.board}}
+        cd buildroot_{{github.event.inputs.board}}/
+        make -C ../buildroot O=$(pwd) ${{github.event.inputs.board}}_defconfig
 
     - name: Run make
       run: |
-      make O=$PWD -C ../buildroot -j8 2>&1 | tee build.log
+        make O=$PWD -C ../buildroot -j8 2>&1 | tee build.log
 
     - name: Run buildcheck
       run: |
-      tail -100 build.log
+        tail -100 build.log
