@@ -30,7 +30,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        apt install build-essential ncurses-base ncurses-bin libncurses5-dev dialog
+        sudo apt install -y build-essential ncurses-base ncurses-bin libncurses5-dev dialog
 
     - name: Board configure
       run: |
