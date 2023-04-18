@@ -36,7 +36,7 @@ jobs:
       run: |
         echo "board: ${{ github.event.inputs.board }}"
         make ${{github.event.inputs.board}}_defconfig
-        make sources
+        make source
         make toolchain
 
     - name: Run make
