@@ -38,6 +38,7 @@ jobs:
         #mkdir ../buildroot_{{github.event.inputs.board}}
         #cd ../buildroot_{{github.event.inputs.board}}/
         #make -C ../buildroot-NuNAS O=${PWD} ${{github.event.inputs.board}}_defconfig
+        echo "board: ${{ github.event.inputs.board }}"
         make ${{github.event.inputs.board}}_defconfig
 
     - name: Run make
