@@ -34,14 +34,15 @@ jobs:
 
     - name: Board configure
       run: |
-        echo ${PWD}
-        mkdir ../buildroot_{{github.event.inputs.board}}
-        cd ../buildroot_{{github.event.inputs.board}}/
-        make -C ../buildroot-NuNAS O=${PWD} ${{github.event.inputs.board}}_defconfig
+        #echo ${PWD}
+        #mkdir ../buildroot_{{github.event.inputs.board}}
+        #cd ../buildroot_{{github.event.inputs.board}}/
+        #make -C ../buildroot-NuNAS O=${PWD} ${{github.event.inputs.board}}_defconfig
+        make ${{github.event.inputs.board}}_defconfig
 
     - name: Run make
       run: |
-        make O=$PWD -C ../buildroot -j8 2>&1 | tee build.log
+        make -j8 2>&1 | tee build.log
 
     - name: Run buildcheck
       run: |
