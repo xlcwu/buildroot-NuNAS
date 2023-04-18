@@ -1,0 +1,48 @@
+name: Buildroot CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      board:
+        description: 'board'
+        required: true
+        default: 'qemu_x86_64'
+      email-address:
+        description: 'email-address'
+        required: false
+        default: ''
+      custom-config:
+        description: 'custom-config'
+        required: false
+        default: 'qemu_x86_64_defconfig'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+      apt-get install build-essential ncurses-base ncurses-bin libncurses5-dev dialog
+
+    - name: configure
+      run: |
+      echo '---start configure---'
+      mkdir buildroot_{{github.event.inputs.board}}
+      cd buildroot_{{github.event.inputs.board}}/
+      make -C ../buildroot O=$(pwd) ${{github.event.inputs.board}}_defconfig
+
+    - name: Run make
+      run: |
+      make O=$PWD -C ../buildroot -j8 2>&1 | tee build.log
+
+    - name: Run buildcheck
+      run: |
+      tail -100 build.log
